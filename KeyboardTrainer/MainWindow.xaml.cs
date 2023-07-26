@@ -1,101 +1,42 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace KeyboardTrainer
 {
-    internal sealed partial class MainWindow : Window
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
     {
-        Random random;
-        private int namber_Slaider = 1;
-        private int Lehgt_Text = 105;
-        private int Lengt_Apper_Text = 90;
-        private int fails = 0;
-        private bool f = false;
+        int tempTimer = 0;
+        int fails = 0;
+        Random rendChar = new Random();
+        string baceString = "QWERTYUIOPASDFGHJKLZXCVBNM~!@#$%^&*()_+{}|:\"<>?1234567890[],./\\`-=;'qwertyuiopasdfghjklzxcvbnm";
+        bool flagCapsLock = true;
+        bool flagBackspase = true;
+        bool mesStop = true;
+        DispatcherTimer timer = null;
         public MainWindow()
         {
             InitializeComponent();
-            MyText.Focus();
-            Slider_Slognosti.Value = namber_Slaider;
-            slider_number.Text = Slider_Slognosti.Value.ToString();
+            timer = new DispatcherTimer();
+            timer.Tick += Timer_Tick;
+            timer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
         }
-
-        private void OnKeyDownHandler(object sender, KeyEventArgs e)
-        {
-            Shift.Visibility = Visibility.Hidden;
-            foreach(var i in NoShift.Children)
-            {
-                if(i is StackPanel)
-                {
-                    foreach (var j in (i as StackPanel).Children)
-                    {
-                        if (j is Grid)
-                        {
-                            foreach(var item in (j as Grid).Children)
-                            {
-                                if(item is Button)
-                                {
-                                    if((item as Button).Name == e.Key.ToString())
-                                    {
-                                        (item as Button).Opacity = 0.5;
-                                        if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
-                                        {
-                                            //Shift.Visibility = Visibility.Visible;
-                                            //NoShift.Visibility = Visibility.Collapsed;
-                                            ToApper_Text();
-                                            ToApper_Nambers();
-                                        }
-                                        if (e.Key == Key.Back)
-                                        {
-                                            f = true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        private void OnKeyUpHandler(object sender, KeyEventArgs e)
-        {
-            foreach (var i in NoShift.Children)
-            {
-                if (i is StackPanel)
-                {
-                    foreach (var j in (i as StackPanel).Children)
-                    {
-                        if (j is Grid)
-                        {
-                            foreach (var item in (j as Grid).Children)
-                            {
-                                if (item is Button)
-                                {
-                                    if ((item as Button).Name == e.Key.ToString())
-                                    {
-                                        (item as Button).Opacity = 1;
-                                        if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
-                                        {
-                                            //Shift.Visibility = Visibility.Collapsed;
-                                            //NoShift.Visibility = Visibility.Visible;
-                                            ToLover_Text();
-                                            ToLover_Nambers();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private void ToApper_Text()
+        private void CapitalLetters()
         {
             this.Q.Content = "Q";
             this.W.Content = "W";
@@ -125,8 +66,7 @@ namespace KeyboardTrainer
             this.M.Content = "M";
 
         }
-
-        private void ToLover_Text()
+        private void LoverLetters()
         {
             this.Q.Content = "q";
             this.W.Content = "w";
@@ -156,8 +96,7 @@ namespace KeyboardTrainer
             this.M.Content = "m";
 
         }
-
-        private void ToApper_Nambers()
+        private void CapitalSymbol()
         {
             this.Oem3.Content = "~";
             this.D1.Content = "!";
@@ -181,7 +120,7 @@ namespace KeyboardTrainer
             this.OemPeriod.Content = ">";
             this.OemQuestion.Content = "?";
         }
-        private void ToLover_Nambers()
+        private void LoverSymbol()
         {
             this.Oem3.Content = "`";
             this.D1.Content = "1";
@@ -205,138 +144,194 @@ namespace KeyboardTrainer
             this.OemPeriod.Content = ".";
             this.OemQuestion.Content = "/";
         }
-
-        private void Slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
-            ((Slider)sender).SelectionEnd = e.NewValue;
-            slider_number.Text = ((int)e.NewValue).ToString();
+            foreach (UIElement it in (this.Content as Grid).Children)
+            {
+                if (it is Grid)
+                {
+                    foreach (var item in (it as Grid).Children)
+                    {
+                        if (item is Button)
+                        {
+                            if ((item as Button).Name == e.Key.ToString())
+                            {
+                                (item as Button).Opacity = 0.5;
+                                if (e.Key.ToString() == "LeftShift" || e.Key.ToString() == "RightShift")
+                                {
+                                    CapitalSymbol();
+                                    if (flagCapsLock)
+                                    {
+                                        CapitalLetters();
+                                    }
+                                    else
+                                    {
+                                        LoverLetters();
+                                    }
+                                }
+                                else if (e.Key.ToString() == "Capital")
+                                {
+                                    if (flagCapsLock)
+                                    {
+                                        CapitalLetters();
+                                        flagCapsLock = false;
+                                    }
+                                    else
+                                    {
+                                        LoverLetters();
+                                        flagCapsLock = true;
+                                    }
+                                }
+                                else if (e.Key.ToString() == "Back")
+                                {
+                                    flagBackspase = false;
+                                }
+                                else
+                                {
+                                    flagBackspase = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        private void Form_PreviewKeyUp(object sender, KeyEventArgs e)
+        {
+            lineUser.Focus();
+            foreach (UIElement it in (this.Content as Grid).Children)
+            {
+                if (it is Grid)
+                {
+                    foreach (var item in (it as Grid).Children)
+                    {
+                        if (item is Button)
+                        {
+
+                            if ((item as Button).Name == e.Key.ToString())
+                            {
+                                (item as Button).Opacity = 1;
+                                if (e.Key.ToString() == "LeftShift" || e.Key.ToString() == "RightShift")
+                                {
+                                    LoverSymbol();
+                                    if (!flagCapsLock)
+                                    {
+                                        CapitalLetters();
+                                    }
+                                    else
+                                    {
+                                        LoverLetters();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (!mesStop)
+            {
+                MessageBox.Show($"Задание завершенно!\n Коилчество символов {linePrograms.Text.Length}.\n Коилчество ошибок {Fails.Content}.\nДля завершения задания нажмите Stop.", "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
+                mesStop = true;
+            }
+        }
+        private void SliderDifficulty_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            int num = 0;
+            Slider s = sender as Slider;
+            num = (int)s.Value;
+            Difficulty.Content = num.ToString();
         }
 
-        private void Zapolnenie_Text()
+        private void Start_Click(object sender, RoutedEventArgs e)
         {
-            random = new Random();
-            List<char> Simvol_Lover = new List<char> { '`','1','2','q','a','z','9','i','k',',',' ','3','w','s','x',
-            '0','o','l','.',' ','4','e','d','c','-','=','p','[',']','\\',';','\'','/',' ','5','6','r','t','f','g','v','b',
-            ' ','7','8','y','u','h','j','n','m',' '};
-            List<char> Simvol_Upper = new List<char> { '~','!','@','Q','A','Z','(','I','K','<',' ','#','W','S','X',
-            ')','O','L','>',' ','$','E','D','C','_','+','P','{','}','|',':','\"','?',' ','%','^','R','T','F','G','V','B',
-            ' ','&','*','Y','U','H','J','N','M',' '};
-            List<char> Stroca_Rand = new List<char> { };
-            if (namber_Slaider == 1)
+            Start.IsEnabled = false;
+            SliderDifficulty.IsEnabled = false;
+            CaseSensitive.IsEnabled = false;
+            Stop.IsEnabled = true;
+            tempTimer = 0;
+            timer.Start();
+            CollectString(Convert.ToInt32(Difficulty.Content), baceString, !(bool)CaseSensitive.IsChecked);
+            lineUser.IsReadOnly = false;
+            lineUser.IsEnabled = true;
+            lineUser.Focus();
+        }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            tempTimer++;
+            Speed();
+        }
+
+        private void CollectString(int countChar, string baceString, bool flagSensitive)
+        {
+            string carhs = "";
+            int sensitive = (flagSensitive) ? 47 : 0;
+            for (int i = 0; i < countChar; i++)
             {
-                for (int i = 0; i < 11; i++)
-                {
-                    Stroca_Rand.Add(Simvol_Lover[i]);
-                }
-                if (this.Chec_Boks_Shift.IsChecked == true)
-                {
-                    for (int i = 0; i < 11; i++)
-                    {
-                        Stroca_Rand.Add(Simvol_Upper[i]);
-                    }
-                }
+                carhs += baceString[rendChar.Next(sensitive, baceString.Length)];
             }
-            else if (namber_Slaider == 2)
+            carhs += " ";
+            int countString = (flagSensitive) ? 75 : 70;
+            for (int i = 0; i < countString; i++)
             {
-                for (int i = 0; i < 20; i++)
-                {
-                    Stroca_Rand.Add(Simvol_Lover[i]);
-                }
-                if (this.Chec_Boks_Shift.IsChecked == true)
-                {
-                    for (int i = 0; i < 20; i++)
-                    {
-                        Stroca_Rand.Add(Simvol_Upper[i]);
-                    }
-                }
+                linePrograms.Text += carhs[rendChar.Next(0, carhs.Length)];
             }
-            else if (namber_Slaider == 3)
+        }
+        private void Stop_Click(object sender, RoutedEventArgs e)
+        {
+            Start.IsEnabled = true;
+            SliderDifficulty.IsEnabled = true;
+            CaseSensitive.IsEnabled = true;
+            Stop.IsEnabled = false;
+            lineUser.Text = "";
+            linePrograms.Text = "";
+            Fails.Content = 0;
+            SpeedChar.Content = 0;
+            lineUser.IsReadOnly = true;
+            lineUser.IsEnabled = false;
+            timer.Stop();
+            tempTimer = 0;
+            fails = 0;
+        }
+        private void lineUser_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            string str = linePrograms.Text.Substring(0, lineUser.Text.Length);
+            if (lineUser.Text.Equals(str))
             {
-                for (int i = 0; i < 34; i++)
+                if (flagBackspase)
                 {
-                    Stroca_Rand.Add(Simvol_Lover[i]);
+                    Speed();
                 }
-                if (this.Chec_Boks_Shift.IsChecked == true)
-                {
-                    for (int i = 0; i < 34; i++)
-                    {
-                        Stroca_Rand.Add(Simvol_Upper[i]);
-                    }
-                }
-            }
-            else if (namber_Slaider == 4)
-            {
-                for (int i = 0; i < 43; i++)
-                {
-                    Stroca_Rand.Add(Simvol_Lover[i]);
-                }
-                if (this.Chec_Boks_Shift.IsChecked == true)
-                {
-                    for (int i = 0; i < 43; i++)
-                    {
-                        Stroca_Rand.Add(Simvol_Upper[i]);
-                    }
-                }
-            }
-            else if (namber_Slaider == 5)
-            {
-                for (int i = 0; i < 52; i++)
-                {
-                    Stroca_Rand.Add(Simvol_Lover[i]);
-                }
-                if (this.Chec_Boks_Shift.IsChecked == true)
-                {
-                    for (int i = 0; i < 52; i++)
-                    {
-                        Stroca_Rand.Add(Simvol_Upper[i]);
-                    }
-                }
-            }
-            String str = "";
-            if (this.Chec_Boks_Shift.IsChecked == true)
-            {
-                for (int i = 0; i < Lengt_Apper_Text; i++)
-                {
-                    str += Stroca_Rand[random.Next(Stroca_Rand.Count)];
-                }
+                lineUser.Foreground = new SolidColorBrush(Colors.Black);
             }
             else
             {
-                for (int i = 0; i < Lehgt_Text; i++)
+                if (flagBackspase)
                 {
-                    str += Stroca_Rand[random.Next(Stroca_Rand.Count)];
-                }
-            }
-            this.GenerateText.Text = str;
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            Zapolnenie_Text();
-            MyText.Focus();
-        }
-
-        private void MyText_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            int start = 0;
-            int Text_Length = this.MyText.Text.Length;
-            String str = this.GenerateText.Text.Substring(start, Text_Length);
-            if (MyText.Text.Equals(str))
-            {
-                //MyTextColor.Text = MyText.Text;
-
-                GenerateText.Background = Brushes.LightGreen; 
-            }
-            else
-            {
-                if (f == false)
-                {
-                    GenerateText.Background = Brushes.LightGray;
                     fails++;
                 }
-                Fails.Text = fails.ToString();
-                //MessageBox.Show("Ахтунг");
+                lineUser.Foreground = new SolidColorBrush(Colors.Red);
+                Fails.Content = fails;
             }
+            if (lineUser.Text.Length == linePrograms.Text.Length)
+            {
+                timer.Stop();
+                Speed();
+                lineUser.IsReadOnly = true;
+                mesStop = false;
+            }
+        }
+        private void CaseSensitive_Checked_1(object sender, RoutedEventArgs e)
+        {
+            SliderDifficulty.Maximum = 94;
+        }
+        private void CaseSensitive_Unchecked(object sender, RoutedEventArgs e)
+        {
+            SliderDifficulty.Maximum = 47;
+        }
+        void Speed()
+        {
+            SpeedChar.Content = Math.Round(((double)lineUser.Text.Length / tempTimer) * 60).ToString();
         }
     }
 }
